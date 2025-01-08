@@ -30,7 +30,7 @@ function compile_linux() {
 	make -j $(nproc)
 	make install
 
-	cp bin/lib/*.so ../bin/linux
+	cp bin/lib/*.so* ../bin/linux
 	cp /usr/lib/libx26*.so ../bin/linux
 
 	echo "Compiling FFmpeg for Linux complete"
@@ -54,7 +54,7 @@ function compile_windows() {
 		--arch=x86_64 --target-os=mingw32 --enable-cross-compile \
 		--cross-prefix=x86_64-w64-mingw32- \
 		--quiet \
-		--extra-libs=-lpthread \
+		--extra-libs=-lpthread  --extra-ldflags="-static"\
 		--extra-cflags="-fPIC" --extra-ldflags="-fpic" \
 		\
 		--disable-postproc --disable-avfilter --disable-sndio \
