@@ -3,6 +3,12 @@ class_name TimelineClips extends Control
 const TRACK_HEIGHT: int = 30
 const LINE_HEIGHT: int = 4
 
+const STYLE_BOXES: Dictionary = {
+    File.TYPE.IMAGE: preload("res://styles/style_box_image.tres"),
+    File.TYPE.AUDIO: preload("res://styles/style_box_audio.tres"),
+    File.TYPE.VIDEO: preload("res://styles/style_box_video.tres")
+}
+
 static var instance: TimelineClips
 
 @export var preview: PanelContainer
@@ -140,6 +146,7 @@ func _remove_new_clips(a_new_clips: Dictionary, a_track_id: int) -> void:
 
 func add_clip(a_clip_data: ClipData, a_track_id: int) -> void:
 	var l_button: Button = Button.new()
+	var l_style_box: StyleBoxFlat = STYLE_BOXES[a_clip_data.type]
 
 	l_button.clip_text = true
 	l_button.name = str(a_clip_data.id)
@@ -150,15 +157,6 @@ func add_clip(a_clip_data: ClipData, a_track_id: int) -> void:
 	l_button.position.y = a_track_id * (LINE_HEIGHT + TRACK_HEIGHT)
 	l_button.mouse_filter = Control.MOUSE_FILTER_PASS
 
-	var l_style_box: StyleBoxFlat = StyleBoxFlat.new()
-
-	if a_clip_data.type == File.TYPE.IMAGE:
-		l_style_box = preload("res://styles/style_box_image.tres")
-	elif a_clip_data.type == File.TYPE.AUDIO:
-		l_style_box = preload("res://styles/style_box_audio.tres")
-	elif a_clip_data.type == File.TYPE.VIDEO:
-		l_style_box = preload("res://styles/style_box_video.tres")
-	
 	l_button.add_theme_stylebox_override("normal", l_style_box)
 	l_button.add_theme_stylebox_override("focus", l_style_box)
 	l_button.add_theme_stylebox_override("hover", l_style_box)

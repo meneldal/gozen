@@ -120,6 +120,9 @@ func _set_frame(a_frame_nr: int = step_playhead(), a_force_playhead: bool = fals
 
 	_on_frame_nr_changed.emit()
 
+	if frame_nr == Project.timeline_end:
+		is_playing = false
+
 
 func set_view(a_id: int) -> void: # a_id is track id
 	var l_material: ShaderMaterial = views[-a_id].material

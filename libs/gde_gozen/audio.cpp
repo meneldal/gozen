@@ -29,7 +29,8 @@ PackedByteArray Audio::get_audio_data(String a_path) {
 			l_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 			continue;
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
-			l_data = _get_audio(l_format_ctx, l_format_ctx->streams[i]);
+			l_data = _get_audio(l_format_ctx, l_format_ctx->streams[i],
+						a_path.get_extension().to_lower() == "wav");
 			break;
 		}
 	}
@@ -125,7 +126,7 @@ PackedByteArray Audio::change_to_mono(PackedByteArray a_data, bool a_left) {
 }
 
 
-PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream) {
+PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream, bool a_wav) {
 	const int TARGET_SAMPLE_RATE = 44100;
 	const AVSampleFormat TARGET_FORMAT = AV_SAMPLE_FMT_S16;
 	const AVChannelLayout TARGET_LAYOUT = AV_CHANNEL_LAYOUT_STEREO;
@@ -206,6 +207,12 @@ PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 
 		if ((response = av_frame_get_buffer(l_decoded_frame, 0)) < 0) {
 			FFmpeg::print_av_error("Couldn't create new frame for swr!", response);
+			av_frame_unref(l_frame);
+			av_frame_unref(l_decoded_frame);
+			break;
+		}
+		if (a_wav && (response = swr_config_frame(l_swr_ctx, l_decoded_frame, l_frame)) < 0) {
+			FFmpeg::print_av_error("Couldn't config the audio frame!", response);
 			av_frame_unref(l_frame);
 			av_frame_unref(l_decoded_frame);
 			break;

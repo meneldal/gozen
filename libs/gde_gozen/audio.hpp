@@ -16,7 +16,7 @@ class Audio : public Resource {
 	GDCLASS(Audio, Resource);
 
 private:
-	static PackedByteArray _get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream);
+	static PackedByteArray _get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream, bool a_wav);
 
 	static inline void _log(String a_message) {
 		UtilityFunctions::print("Renderer: ", a_message, ".");

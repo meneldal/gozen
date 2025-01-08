@@ -23,6 +23,8 @@ func _ready() -> void:
 	if gui_input.connect(_on_gui_input):
 		printerr("Couldn't connect to gui_input!")
 
+	
+
 
 func _process(_delta: float) -> void:
 	if is_resizing_left or is_resizing_right:
@@ -47,17 +49,15 @@ func _input(a_event: InputEvent) -> void:
 	if button_pressed and a_event.is_action_pressed("clip_split"):
 		# Check if playhead is inside of clip, else we skip creating undo and
 		# redo entries.
-		var l_clip_data: ClipData = Project.clips[name.to_int()]
-
-		if View.frame_nr <= l_clip_data.start_frame:
+		if View.frame_nr <= get_clip_data().start_frame:
 			return # Playhead is left of the clip
-		elif View.frame_nr >= l_clip_data.start_frame + l_clip_data.duration:
+		elif View.frame_nr >= get_clip_data().start_frame + get_clip_data().duration:
 			return # Playhead is right of the clip
 
 		Project.undo_redo.create_action("Deleting clip on timeline")
 
-		Project.undo_redo.add_do_method(_cut_clip.bind(View.frame_nr, l_clip_data))
-		Project.undo_redo.add_undo_method(_uncut_clip.bind(View.frame_nr, l_clip_data))
+		Project.undo_redo.add_do_method(_cut_clip.bind(View.frame_nr, get_clip_data()))
+		Project.undo_redo.add_undo_method(_uncut_clip.bind(View.frame_nr, get_clip_data()))
 
 		Project.undo_redo.add_do_method(View._update_frame)
 		Project.undo_redo.add_undo_method(View._update_frame)
@@ -106,7 +106,7 @@ func _get_drag_data(_pos: Vector2) -> Draggable:
 		printerr("Something went wrong appending to draggable ids!")
 
 	l_draggable.files = false
-	l_draggable.duration = Project.clips[name.to_int()].duration
+	l_draggable.duration = get_clip_data().duration
 	l_draggable.mouse_offset = TimelineClips.get_frame_nr(get_local_mouse_position().x)
 
 	l_draggable.ignore.append(l_ignore)
@@ -146,13 +146,12 @@ func _add_resize_button(a_preset: LayoutPreset, a_left: bool) -> void:
 
 
 func _on_resize_engaged(a_left: bool) -> void:
-	var l_clip_data: ClipData = Project.clips[name.to_int()]
 	var l_track: int = TimelineClips.get_track_id(position.y)
 	var l_frame: int = TimelineClips.get_frame_nr(position.x)
 	var l_previous: int = -1
 
-	start_frame = l_clip_data.start_frame
-	duration = l_clip_data.duration
+	start_frame = get_clip_data().start_frame
+	duration = get_clip_data().duration
 
 	# First calculate spacing left of handle to other clips
 	if a_left:
@@ -167,7 +166,7 @@ func _on_resize_engaged(a_left: bool) -> void:
 		else:
 			max_left_resize = Project.get_clip_data(l_track, l_previous).duration + l_previous
 	else:
-		max_left_resize = l_clip_data.start_frame + 1
+		max_left_resize = get_clip_data().start_frame + 1
 
 	# First calculate spacing right of handle to other clips
 	l_previous = -1
@@ -180,17 +179,18 @@ func _on_resize_engaged(a_left: bool) -> void:
 
 		max_right_resize = maxi(l_previous, -1)
 	else:
-		max_right_resize = l_clip_data.duration + l_clip_data.start_frame - 1
+		max_right_resize = get_clip_data().duration + get_clip_data().start_frame - 1
 
 	# Check if audio/video how much space is left to extend, take minimum
-	if l_clip_data.type in [File.TYPE.VIDEO, File.TYPE.AUDIO]:
+	if get_clip_data().type in [File.TYPE.VIDEO, File.TYPE.AUDIO]:
 		if a_left:
-			max_left_resize = max(max_left_resize, l_clip_data.start_frame - l_clip_data.begin)
+			max_left_resize = max(max_left_resize,
+					get_clip_data().start_frame - get_clip_data().begin)
 		else:
-			var l_duration_left: int = Project.files[l_clip_data.file_id].duration
+			var l_duration_left: int = get_file().duration
 
-			l_duration_left -= l_clip_data.begin
-			l_duration_left += l_clip_data.start_frame
+			l_duration_left -= get_clip_data().begin
+			l_duration_left += get_clip_data().start_frame
 
 			if max_right_resize == -1:
 				max_right_resize = l_duration_left
@@ -216,8 +216,8 @@ func _on_commit_resize() -> void:
 			TimelineClips.get_frame_nr(size.x)))
 
 	Project.undo_redo.add_undo_method(_set_resize_data.bind(
-			Project.clips[name.to_int()].start_frame,
-			Project.clips[name.to_int()].duration))
+			get_clip_data().start_frame,
+			get_clip_data().duration))
 
 	Project.undo_redo.add_do_method(View._update_frame)
 	Project.undo_redo.add_undo_method(View._update_frame)
@@ -225,7 +225,7 @@ func _on_commit_resize() -> void:
 
 
 func _set_resize_data(a_new_start: int, a_new_duration: int) -> void:
-	var l_clip_data: ClipData = Project.clips[name.to_int()]
+	var l_clip_data: ClipData = get_clip_data()
 
 	if l_clip_data.start_frame != a_new_start:
 		l_clip_data.begin += a_new_start - l_clip_data.start_frame
@@ -257,7 +257,7 @@ func _cut_clip(a_playhead: int, a_clip_data: ClipData) -> void:
 	l_new_clip.duration = abs(a_clip_data.duration - l_frame)
 	l_new_clip.begin = a_clip_data.begin + l_frame
 
-	a_clip_data.duration -= l_new_clip.duration
+	a_clip_data.duration -= l_new_clip.duration - 1
 	size.x = a_clip_data.duration * Project.timeline_scale
 
 	TimelineClips.instance._add_new_clips({
@@ -275,4 +275,16 @@ func _uncut_clip(a_playhead: int, a_current_clip: ClipData) -> void:
 
 	TimelineClips.instance.delete_clip(l_track, a_playhead)
 	a_current_clip.update_audio_data()
+
+
+func get_clip_data() -> ClipData:
+	return Project.clips[name.to_int()]
+
+
+func get_file() -> File:
+	return Project.files[get_clip_data().file_id]
+
+
+func get_file_data() -> FileData:
+	return Project._files_data[get_clip_data().file_id]
 
