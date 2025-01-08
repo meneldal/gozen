@@ -15,13 +15,8 @@ using namespace godot;
 class Audio : public Resource {
 	GDCLASS(Audio, Resource);
 
-public:
-	static PackedByteArray get_audio_data(String a_path);
-
-	static PackedByteArray combine_data(PackedByteArray a_one, PackedByteArray a_two);
-
-	static PackedByteArray change_db(PackedByteArray a_data, float a_db);
-	static PackedByteArray change_to_mono(PackedByteArray a_data, bool a_left);
+private:
+	static PackedByteArray _get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream);
 
 	static inline void _log(String a_message) {
 		UtilityFunctions::print("Renderer: ", a_message, ".");
@@ -31,11 +26,20 @@ public:
 		return false;
 	}
 
-	static PackedByteArray _get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream);
+public:
+	static PackedByteArray get_audio_data(String a_path);
+	static Ref<ImageTexture> get_audio_wave(PackedByteArray a_data, int a_framerate);
+
+	static PackedByteArray combine_data(PackedByteArray a_one, PackedByteArray a_two);
+
+	static PackedByteArray change_db(PackedByteArray a_data, float a_db);
+	static PackedByteArray change_to_mono(PackedByteArray a_data, bool a_left);
+
 
 protected:
 	static inline void _bind_methods() {
 		ClassDB::bind_static_method("Audio", D_METHOD("get_audio_data", "a_file_path"), &Audio::get_audio_data);
+		ClassDB::bind_static_method("Audio", D_METHOD("get_audio_wave", "a_data", "a_framerate"), &Audio::get_audio_wave);
 
 		ClassDB::bind_static_method("Audio", D_METHOD("combine_data", "a_one", "a_two"), &Audio::combine_data);
 

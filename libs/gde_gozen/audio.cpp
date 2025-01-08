@@ -39,6 +39,46 @@ PackedByteArray Audio::get_audio_data(String a_path) {
 	return l_data;
 }
 
+Ref<ImageTexture> Audio::get_audio_wave(PackedByteArray a_data, int a_framerate) {
+	const int16_t *l_raw_data = (const int16_t*)a_data.ptr();
+
+	// Divide by 2 for 16 bits and 2 for stereo * sample rate
+	const int l_width = ((a_data.size() / 2) / (44100 * 2)) * a_framerate;
+	const int l_height = 10;
+	const int samples_per_frame = (44100 * 2) / a_framerate;
+
+	PackedByteArray l_image_data = PackedByteArray();
+
+	l_image_data.resize(l_height * l_width);
+	l_image_data.fill(0); // fill with black
+
+	for (int i = 0; i < l_width; ++i) {
+		int frame_start = i * samples_per_frame;
+		int frame_end = frame_start + samples_per_frame;
+
+		if (frame_end > a_data.size() / 2)
+            frame_end = a_data.size() / 2; // Avoid going out of bounds
+
+        int64_t frame_sum = 0;
+        for (int j = frame_start; j < frame_end; ++j)
+            frame_sum += abs(l_raw_data[j]);
+
+		// Map amplitude to height (0-10)
+        int average_amplitude = frame_sum / (frame_end - frame_start);
+        int block_height = (average_amplitude * l_height * 2) / INT16_MAX;
+        block_height = CLAMP(block_height, 0, l_height);
+
+        // Fill the waveform for this frame in the image
+        for (int y = 0; y < block_height; ++y)
+            l_image_data[(l_height - 1 - y) * l_width + i] = 255; // White pixel
+	}
+
+	Ref<Image> l_image = Image::create_from_data(
+			l_width, l_height, false, Image::FORMAT_L8, l_image_data);
+
+	return ImageTexture::create_from_image(l_image);
+}
+
 
 PackedByteArray Audio::combine_data(PackedByteArray a_one, PackedByteArray a_two) {
 	const int16_t *l_one = (const int16_t*)a_one.ptr();
@@ -109,7 +149,7 @@ PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 		return l_data;
 	}
 
-	enable_multithreading(l_codec_ctx_audio, l_codec_audio);
+	FFmpeg::enable_multithreading(l_codec_ctx_audio, l_codec_audio);
 	l_codec_ctx_audio->request_sample_fmt = TARGET_FORMAT;
 
 	if (avcodec_open2(l_codec_ctx_audio, l_codec_audio, NULL)) {
@@ -117,7 +157,7 @@ PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 		return l_data;
 	}
 
-	response = swr_alloc_set_opts2(&l_swr_ctx,
+	int response = swr_alloc_set_opts2(&l_swr_ctx,
 			&TARGET_LAYOUT,		// Out channel layout: Stereo
 			TARGET_FORMAT,		// We need 16 bits
 			TARGET_SAMPLE_RATE,	// Sample rate should be the Godot default
@@ -126,7 +166,7 @@ PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 			l_codec_ctx_audio->sample_rate, // In sample rate
 			0, nullptr);
 	if (response < 0 || (response = swr_init(l_swr_ctx))) {
-		print_av_error("Couldn't initialize SWR!", response);
+		FFmpeg::print_av_error("Couldn't initialize SWR!", response);
 		avcodec_flush_buffers(l_codec_ctx_audio);
 		avcodec_free_context(&l_codec_ctx_audio);
 		return l_data;
@@ -157,7 +197,7 @@ PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 	size_t l_audio_size = 0;
 	int l_bytes_per_samples = av_get_bytes_per_sample(TARGET_FORMAT);
 
-	while (!(get_frame(a_format_ctx, l_codec_ctx_audio, a_stream->index, l_frame, l_packet))) {
+	while (!(FFmpeg::get_frame(a_format_ctx, l_codec_ctx_audio, a_stream->index, l_frame, l_packet))) {
 		// Copy decoded data to new frame
 		l_decoded_frame->format = TARGET_FORMAT;
 		l_decoded_frame->ch_layout = TARGET_LAYOUT;
@@ -165,14 +205,14 @@ PackedByteArray Audio::_get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 		l_decoded_frame->nb_samples = swr_get_out_samples(l_swr_ctx, l_frame->nb_samples);
 
 		if ((response = av_frame_get_buffer(l_decoded_frame, 0)) < 0) {
-			print_av_error("Couldn't create new frame for swr!", response);
+			FFmpeg::print_av_error("Couldn't create new frame for swr!", response);
 			av_frame_unref(l_frame);
 			av_frame_unref(l_decoded_frame);
 			break;
 		}
 
 		if ((response = swr_convert_frame(l_swr_ctx, l_decoded_frame, l_frame)) < 0) {
-			print_av_error("Couldn't convert the audio frame!", response);
+			FFmpeg::print_av_error("Couldn't convert the audio frame!", response);
 			av_frame_unref(l_frame);
 			av_frame_unref(l_decoded_frame);
 			break;
