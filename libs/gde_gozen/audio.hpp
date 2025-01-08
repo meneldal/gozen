@@ -31,6 +31,8 @@ public:
 		return false;
 	}
 
+	static PackedByteArray _get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream);
+
 protected:
 	static inline void _bind_methods() {
 		ClassDB::bind_static_method("Audio", D_METHOD("get_audio_data", "a_file_path"), &Audio::get_audio_data);
