@@ -99,7 +99,6 @@ func _on_gui_input(a_event: InputEvent) -> void:
 			return
 		if !(l_event as InputEventWithModifiers).alt_pressed and l_event.is_pressed():
 			EffectsPanel.instance.open_clip_effects(name.to_int())
-			print("handled")
 			get_viewport().set_input_as_handled()
 
 	if a_event.is_action_pressed("delete_clip"):
@@ -147,9 +146,8 @@ func _get_drag_data(_pos: Vector2) -> Draggable:
 func _notification(a_notification_type: int) -> void:
 	match a_notification_type:
 		NOTIFICATION_DRAG_END:
-			if is_dragging:
-				is_dragging = false
-				modulate = Color(1, 1, 1, 1)
+			is_dragging = false
+			modulate = Color(1, 1, 1, 1)
 
 
 func _add_resize_button(a_preset: LayoutPreset, a_left: bool) -> void:
