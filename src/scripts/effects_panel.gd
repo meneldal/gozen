@@ -61,6 +61,8 @@ var current_clip: ClipData
 
 func _ready() -> void:
 	instance = self
+	audio_effects.visible = false
+	visual_effects.visible = false
 
 
 func open_file_effects(a_id: int) -> void:

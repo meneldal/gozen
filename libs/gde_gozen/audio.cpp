@@ -44,33 +44,32 @@ Ref<ImageTexture> Audio::get_audio_wave(PackedByteArray a_data, int a_framerate)
 	const int16_t *l_raw_data = (const int16_t*)a_data.ptr();
 
 	// Divide by 2 for 16 bits and 2 for stereo * sample rate
-	const int l_width = ((a_data.size() / 2) / (44100 * 2)) * a_framerate;
-	const int l_height = 10;
-	const int samples_per_frame = (44100 * 2) / a_framerate;
+	const int l_width = (a_data.size() * a_framerate) / (44100 * 4);
+	const int l_height = 30;
+	const int l_samples_per_frame = (44100 * 2) / a_framerate;
 
 	PackedByteArray l_image_data = PackedByteArray();
-
 	l_image_data.resize(l_height * l_width);
 	l_image_data.fill(0); // fill with black
 
 	for (int i = 0; i < l_width; ++i) {
-		int frame_start = i * samples_per_frame;
-		int frame_end = frame_start + samples_per_frame;
+		int l_frame_start = i * l_samples_per_frame;
+		int l_frame_end = l_frame_start + l_samples_per_frame;
 
-		if (frame_end > a_data.size() / 2)
-            frame_end = a_data.size() / 2; // Avoid going out of bounds
+		if (l_frame_end > a_data.size() / 2)
+			l_frame_end = a_data.size() / 2; // Avoid going out of bounds
 
-        int64_t frame_sum = 0;
-        for (int j = frame_start; j < frame_end; ++j)
-            frame_sum += abs(l_raw_data[j]);
+		int32_t l_sum_amplitude = 0;
+		for (int x = l_frame_start; x < l_frame_end; ++x)
+			l_sum_amplitude += abs(l_raw_data[x]);
 
-		// Map amplitude to height (0-10)
-        int average_amplitude = frame_sum / (frame_end - frame_start);
-        int block_height = (average_amplitude * l_height * 2) / INT16_MAX;
-        block_height = CLAMP(block_height, 0, l_height);
+		// Height mapping
+		int l_avg_amplitude = l_sum_amplitude / (l_frame_end - l_frame_start);
+		int l_block_height = (l_avg_amplitude * l_height * 2) / (INT16_MAX / 4);
+		l_block_height = CLAMP(l_block_height, 0, l_height);
 
         // Fill the waveform for this frame in the image
-        for (int y = 0; y < block_height; ++y)
+        for (int y = 0; y < l_block_height; ++y)
             l_image_data[(l_height - 1 - y) * l_width + i] = 255; // White pixel
 	}
 

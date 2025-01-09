@@ -6,6 +6,7 @@ var id: int
 var image: ImageTexture = null
 var audio: PackedByteArray = []
 var video: Array[Video] = []
+var wave: ImageTexture = null
 
 var padding: int = 0
 var resolution: Vector2i = Vector2i.ZERO
@@ -32,6 +33,12 @@ func get_duration() -> int:
 			File.TYPE.VIDEO:
 				l_file.duration = floor(floor(video[0].get_frame_duration() /
 						video[0].get_framerate()) * Project.framerate)
+
+	if audio.size() != null:
+		wave = Audio.get_audio_wave(audio, Project.framerate)
+
+	if l_file.duration == 0:
+		printerr("Something went wrong loading file ", id, ", duration is 0!")
 
 	return Project.files[id].duration
 

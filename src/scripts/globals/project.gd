@@ -32,6 +32,9 @@ func _ready() -> void:
 
 
 func _input(a_event: InputEvent) -> void:
+	if a_event.is_action_pressed("breakpoint"):
+		breakpoint
+
 	if a_event.is_action_pressed("ui_undo") and undo_redo.has_undo():
 		if !undo_redo.undo():
 			printerr("Coulnd't undo action!")

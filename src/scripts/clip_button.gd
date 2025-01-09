@@ -12,6 +12,8 @@ var max_right_resize: int = 0 # Maximum frame
 var start_frame: int = 0
 var duration: int = 0
 
+var wave_texture_rect: TextureRect = null
+
 
 
 func _ready() -> void:
@@ -23,7 +25,24 @@ func _ready() -> void:
 	if gui_input.connect(_on_gui_input):
 		printerr("Couldn't connect to gui_input!")
 
-	
+	if get_clip_data().type in View.AUDIO_TYPES:
+		var l_material: ShaderMaterial = ShaderMaterial.new()
+
+		clip_children = CLIP_CHILDREN_AND_DRAW
+
+		l_material.shader = preload("res://shaders/wave.gdshader")
+
+		wave_texture_rect = TextureRect.new()
+		wave_texture_rect.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
+		wave_texture_rect.texture = get_file_data().wave
+		wave_texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wave_texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		wave_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		wave_texture_rect.position.x = -(get_clip_data().begin * Project.timeline_scale)
+		wave_texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		wave_texture_rect.material = l_material
+
+		add_child(wave_texture_rect)
 
 
 func _process(_delta: float) -> void:
@@ -38,6 +57,7 @@ func _process(_delta: float) -> void:
 		elif is_resizing_left:
 			position.x = l_new_frame * Project.timeline_scale
 			size.x = (duration - (l_new_frame - start_frame)) * Project.timeline_scale
+			_update_wave(get_clip_data().begin + (l_new_frame - start_frame))
 
 
 func _on_button_down() -> void:
@@ -46,7 +66,8 @@ func _on_button_down() -> void:
 
 
 func _input(a_event: InputEvent) -> void:
-	if button_pressed and a_event.is_action_pressed("clip_split"):
+	if a_event.is_action_pressed("clip_split"):
+
 		# Check if playhead is inside of clip, else we skip creating undo and
 		# redo entries.
 		if View.frame_nr <= get_clip_data().start_frame:
@@ -61,6 +82,8 @@ func _input(a_event: InputEvent) -> void:
 
 		Project.undo_redo.add_do_method(View._update_frame)
 		Project.undo_redo.add_undo_method(View._update_frame)
+		Project.undo_redo.add_do_method(_update_wave)
+		Project.undo_redo.add_undo_method(_update_wave)
 		Project.undo_redo.commit_action()
 
 
@@ -69,9 +92,14 @@ func _on_gui_input(a_event: InputEvent) -> void:
 	# But when clicking on clips we do not want the playhead to keep jumping.
 	# Maybe later on we can allow for clip clicking and playhead moving by
 	# holding alt or something.
-	if a_event is InputEventMouse:
-		if !(a_event as InputEventWithModifiers).alt_pressed and a_event.is_released():
+	if a_event is InputEventMouseButton:
+		var l_event: InputEventMouseButton = a_event
+
+		if l_event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			return
+		if !(l_event as InputEventWithModifiers).alt_pressed and l_event.is_pressed():
 			EffectsPanel.instance.open_clip_effects(name.to_int())
+			print("handled")
 			get_viewport().set_input_as_handled()
 
 	if a_event.is_action_pressed("delete_clip"):
@@ -221,6 +249,9 @@ func _on_commit_resize() -> void:
 
 	Project.undo_redo.add_do_method(View._update_frame)
 	Project.undo_redo.add_undo_method(View._update_frame)
+	Project.undo_redo.add_do_method(_update_wave)
+	Project.undo_redo.add_undo_method(_update_wave)
+
 	Project.undo_redo.commit_action()
 
 
@@ -287,4 +318,9 @@ func get_file() -> File:
 
 func get_file_data() -> FileData:
 	return Project._files_data[get_clip_data().file_id]
+
+
+func _update_wave(a_begin: int = get_clip_data().begin) -> void:
+	if wave_texture_rect != null:
+		wave_texture_rect.position.x = -(a_begin * Project.timeline_scale)
 
