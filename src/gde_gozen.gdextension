@@ -12,3 +12,76 @@ linux.release.x86_64 = "res://../libs/bin/linux/libgozen.linux.template_release.
 windows.debug.x86_64 = "res://../libs/bin/windows/libgozen.windows.template_debug.dev.x86_64.dll"
 windows.release.x86_64 = "res://../libs/bin/windows/libgozen.windows.template_release.x86_64.dll"
 
+[icons]
+
+Video = "res://logo.svg"
+Renderer = "res://logo.svg"
+Audio = "res://logo.svg"
+
+[dependencies]
+
+linux.debug = {
+    "res://../libs/bin/linux/libavcodec.so" : "",
+    "res://../libs/bin/linux/libavcodec.so.60" : "",
+    "res://../libs/bin/linux/libavcodec.so.60.31.102" : "",
+    "res://../libs/bin/linux/libavdevice.so" : "",
+    "res://../libs/bin/linux/libavdevice.so.60" : "",
+    "res://../libs/bin/linux/libavdevice.so.60.3.100" : "",
+    "res://../libs/bin/linux/libavformat.so" : "",
+    "res://../libs/bin/linux/libavformat.so.60" : "",
+    "res://../libs/bin/linux/libavformat.so.60.16.100" : "",
+    "res://../libs/bin/linux/libavutil.so" : "",
+    "res://../libs/bin/linux/libavutil.so.58" : "",
+    "res://../libs/bin/linux/libavutil.so.58.29.100" : "",
+    "res://../libs/bin/linux/libswresample.so" : "",
+    "res://../libs/bin/linux/libswresample.so.4" : "",
+    "res://../libs/bin/linux/libswresample.so.4.12.100" : "",
+    "res://../libs/bin/linux/libswscale.so" : "",
+    "res://../libs/bin/linux/libswscale.so.7" : "",
+    "res://../libs/bin/linux/libswscale.so.7.5.100" : "",
+    "res://../libs/bin/linux/libx264.so" : "",
+    "res://../libs/bin/linux/libx265.so" : "",
+}
+linux.release = {
+    "res://../libs/bin/linux/libavcodec.so" : "",
+    "res://../libs/bin/linux/libavcodec.so.60" : "",
+    "res://../libs/bin/linux/libavcodec.so.60.31.102" : "",
+    "res://../libs/bin/linux/libavdevice.so" : "",
+    "res://../libs/bin/linux/libavdevice.so.60" : "",
+    "res://../libs/bin/linux/libavdevice.so.60.3.100" : "",
+    "res://../libs/bin/linux/libavformat.so" : "",
+    "res://../libs/bin/linux/libavformat.so.60" : "",
+    "res://../libs/bin/linux/libavformat.so.60.16.100" : "",
+    "res://../libs/bin/linux/libavutil.so" : "",
+    "res://../libs/bin/linux/libavutil.so.58" : "",
+    "res://../libs/bin/linux/libavutil.so.58.29.100" : "",
+    "res://../libs/bin/linux/libswresample.so" : "",
+    "res://../libs/bin/linux/libswresample.so.4" : "",
+    "res://../libs/bin/linux/libswresample.so.4.12.100" : "",
+    "res://../libs/bin/linux/libswscale.so" : "",
+    "res://../libs/bin/linux/libswscale.so.7" : "",
+    "res://../libs/bin/linux/libswscale.so.7.5.100" : "",
+    "res://../libs/bin/linux/libx264.so" : "",
+    "res://../libs/bin/linux/libx265.so" : "",
+}
+
+windows.debug = {
+    "res://../libs/bin/windows/avcodec-60.dll" : "",
+    "res://../libs/bin/windows/avdevice-60.dll" : "",
+    "res://../libs/bin/windows/avformat-60.dll" : "",
+	"res://../libs/bin/windows/swresample-4.dll" : "",
+	"res://../libs/bin/windows/swscale-7.dll" : "",
+    "res://../libs/bin/windows/avutil-58.dll" : "",
+    "res://../libs/bin/windows/libx264-164.dll" : "",
+    "res://../libs/bin/windows/libx265.dll" : "",
+}
+windows.release = {
+    "res://../libs/bin/windows/avcodec-60.dll" : "",
+    "res://../libs/bin/windows/avdevice-60.dll" : "",
+    "res://../libs/bin/windows/avformat-60.dll" : "",
+	"res://../libs/bin/windows/swresample-4.dll" : "",
+	"res://../libs/bin/windows/swscale-7.dll" : "",
+    "res://../libs/bin/windows/avutil-58.dll" : "",
+    "res://../libs/bin/windows/libx264-164.dll" : "",
+    "res://../libs/bin/windows/libx265.dll" : "",
+}

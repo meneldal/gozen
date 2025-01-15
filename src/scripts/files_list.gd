@@ -3,8 +3,8 @@ extends ItemList
 
 
 func _ready() -> void:
-	if get_window().files_dropped.connect(_on_files_dropped):
-		printerr("Couldn't connect to files dropped!")
+	@warning_ignore("return_value_discarded")
+	get_window().files_dropped.connect(_on_files_dropped)
 	
 	
 func _on_files_dropped(a_files: PackedStringArray) -> void:

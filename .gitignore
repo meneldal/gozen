@@ -29,3 +29,4 @@ config.log
 
 compile_commands.json
 
+bin/linux

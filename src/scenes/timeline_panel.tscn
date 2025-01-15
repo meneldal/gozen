@@ -1,7 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://i0b2chrh82xc"]
+[gd_scene load_steps=5 format=3 uid="uid://i0b2chrh82xc"]
 
-[ext_resource type="Script" path="res://scripts/timeline_clips.gd" id="2_1atm4"]
-[ext_resource type="Script" path="res://scripts/playhead.gd" id="2_mi352"]
+[ext_resource type="Script" path="res://scripts/timeline.gd" id="1_t6m8t"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sxfkv"]
 content_margin_left = 3.0
@@ -18,23 +17,22 @@ corner_radius_bottom_left = 3
 color = Color(0.547811, 0, 0.914108, 0.533333)
 thickness = 2
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ung8k"]
-bg_color = Color(0.6, 0.6, 0.6, 0.588235)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h5ind"]
 bg_color = Color(0.683393, 0, 1, 1)
 
-[node name="TimelinePanel" type="PanelContainer"]
+[node name="TimelinePanel" type="PanelContainer" node_paths=PackedStringArray("scroll", "main", "clips", "preview", "playhead")]
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 204.0
 grow_horizontal = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_sxfkv")
+script = ExtResource("1_t6m8t")
+scroll = NodePath("TimelineScroll")
+main = NodePath("TimelineScroll/Main")
+clips = NodePath("TimelineScroll/Main/Clips")
+preview = NodePath("TimelineScroll/Main/Preview")
+playhead = NodePath("TimelineScroll/Main/Playhead")
 metadata/_edit_lock_ = true
 
 [node name="Lines" type="VBoxContainer" parent="."]
@@ -45,66 +43,80 @@ alignment = 2
 [node name="Spacing1" type="Control" parent="Lines"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+mouse_filter = 1
 
 [node name="Line1" type="HSeparator" parent="Lines"]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/separator = SubResource("StyleBoxLine_jcy7d")
 
 [node name="Spacing2" type="Control" parent="Lines"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+mouse_filter = 1
 
 [node name="Line2" type="HSeparator" parent="Lines"]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/separator = SubResource("StyleBoxLine_jcy7d")
 
 [node name="Spacing3" type="Control" parent="Lines"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+mouse_filter = 1
 
 [node name="Line3" type="HSeparator" parent="Lines"]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/separator = SubResource("StyleBoxLine_jcy7d")
 
 [node name="Spacing4" type="Control" parent="Lines"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+mouse_filter = 1
 
 [node name="Line4" type="HSeparator" parent="Lines"]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/separator = SubResource("StyleBoxLine_jcy7d")
 
 [node name="Spacing5" type="Control" parent="Lines"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+mouse_filter = 1
 
 [node name="Line5" type="HSeparator" parent="Lines"]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/separator = SubResource("StyleBoxLine_jcy7d")
 
 [node name="Spacing6" type="Control" parent="Lines"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+mouse_filter = 1
 
 [node name="Line6" type="HSeparator" parent="Lines"]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/separator = SubResource("StyleBoxLine_jcy7d")
 
 [node name="ScrollbarSpacer" type="Control" parent="Lines"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
+mouse_filter = 1
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="TimelineScroll" type="ScrollContainer" parent="."]
 layout_mode = 2
 vertical_scroll_mode = 0
 
-[node name="Main" type="Control" parent="ScrollContainer"]
+[node name="Main" type="Control" parent="TimelineScroll"]
 custom_minimum_size = Vector2(1080, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+mouse_filter = 1
 
-[node name="Clips" type="Control" parent="ScrollContainer/Main" node_paths=PackedStringArray("preview")]
+[node name="Clips" type="Control" parent="TimelineScroll/Main"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -112,18 +124,20 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
-script = ExtResource("2_1atm4")
-preview = NodePath("../ClipPreview")
 
-[node name="ClipPreview" type="PanelContainer" parent="ScrollContainer/Main"]
+[node name="Preview" type="Control" parent="TimelineScroll/Main"]
 visible = false
-layout_mode = 0
-offset_right = 229.0
-offset_bottom = 35.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_ung8k")
+modulate = Color(1, 1, 1, 0.784314)
+self_modulate = Color(0.666667, 0, 1, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
 
-[node name="Playhead" type="Panel" parent="ScrollContainer/Main"]
+[node name="Playhead" type="Panel" parent="TimelineScroll/Main"]
 custom_minimum_size = Vector2(2, 0)
 layout_mode = 1
 anchors_preset = 9
@@ -132,20 +146,5 @@ offset_right = 2.0
 grow_vertical = 2
 mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_h5ind")
-script = ExtResource("2_mi352")
 
-[node name="Checker" type="Panel" parent="ScrollContainer/Main"]
-visible = false
-layout_mode = 0
-offset_left = 300.0
-offset_right = 309.0
-offset_bottom = 216.0
-
-[node name="Panel2" type="Panel" parent="ScrollContainer/Main"]
-visible = false
-layout_mode = 0
-offset_left = 780.0
-offset_right = 789.0
-offset_bottom = 216.0
-
-[connection signal="gui_input" from="ScrollContainer/Main" to="ScrollContainer/Main/Playhead" method="_on_main_gui_input"]
+[connection signal="gui_input" from="TimelineScroll/Main" to="." method="_on_main_gui_input"]

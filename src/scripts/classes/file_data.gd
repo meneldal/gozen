@@ -34,7 +34,7 @@ func get_duration() -> int:
 				l_file.duration = floor(floor(video[0].get_frame_duration() /
 						video[0].get_framerate()) * Project.framerate)
 
-	if audio.size() != null:
+	if audio.size() != 0:
 		wave = Audio.get_audio_wave(audio, Project.framerate)
 
 	if l_file.duration == 0:

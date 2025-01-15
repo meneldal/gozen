@@ -1,7 +1,6 @@
 extends Node
 
 
-signal _on_timeline_scale_changed
 signal _on_timeline_end_changed
 
 
@@ -15,7 +14,6 @@ var _files_data: Dictionary = {} # { Unique_id (int32): FileData }
 var resolution: Vector2i = Vector2i(1920,1080)
 
 var framerate: int = 30
-var timeline_scale: float = 1.0 : set = set_timeline_scale # How many pixels 1 frame takes 
 var timeline_end: int = 0: set = set_timeline_end
 
 var tracks: Array[Dictionary] = [] # [{frame_nr: clip_id}] each dic is a track
@@ -46,13 +44,6 @@ func _input(a_event: InputEvent) -> void:
 		View._on_play_button_pressed()
 		get_viewport().set_input_as_handled()
 
-	if a_event.is_action_pressed("timeline_zoom_in"):
-		timeline_scale += 0.1
-		get_viewport().set_input_as_handled()
-	elif a_event.is_action_pressed("timeline_zoom_out"):
-		timeline_scale -= 0.1
-		get_viewport().set_input_as_handled()
-
 
 func save(a_path: String = _path) -> void:
 	if a_path == "":
@@ -63,9 +54,9 @@ func save(a_path: String = _path) -> void:
 		l_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
 		l_dialog.filters = ["*.gozen"]
 		l_dialog.use_native_dialog = true
-
-		if l_dialog.file_selected.connect(save):
-			printerr("Couldn't connect file_selected for save dialog!")
+		
+		@warning_ignore("return_value_discarded")
+		l_dialog.file_selected.connect(save)
 
 		add_child(l_dialog)
 		l_dialog.popup_centered()
@@ -80,7 +71,6 @@ func save(a_path: String = _path) -> void:
 	l_file.store_string(var_to_str({
 		"files": files,
 		"framerate": framerate,
-		"timeline_scale": timeline_scale,
 		"tracks": tracks,
 		"clips": clips,
 		"undo_redo": undo_redo
@@ -142,7 +132,6 @@ func load(a_path: String) -> void:
 		match l_key:
 			"files": files = l_data[l_key]
 			"framerate": framerate = l_data[l_key]
-			"timeline_scale": timeline_scale = l_data[l_key]
 			"tracks": tracks = l_data[l_key]
 			"clips": clips = l_data[l_key]
 			"undo_redo": undo_redo = l_data[l_key]
@@ -173,26 +162,12 @@ func add_file(a_file_path: String) -> int:
 	return l_id
 
 
-func get_clip_data(a_track_id: int, a_frame_nr: int) -> ClipData:
-	return clips[tracks[a_track_id][a_frame_nr]]
-
-
 func set_clip_audio(a_clip_id: int, a_data: PackedByteArray) -> void:
 	_audio[a_clip_id] = a_data
 
 
 func get_clip_audio(a_clip_id: int) -> PackedByteArray:
 	return _audio[a_clip_id]
-
-
-func set_timeline_scale(a_new_value: float) -> void:
-	a_new_value = clampf(a_new_value, 0.1, 2.0)
-
-	if a_new_value == timeline_scale:
-		return
-
-	timeline_scale = a_new_value
-	_on_timeline_scale_changed.emit()
 
 
 func set_timeline_end(a_new_value: int) -> void:

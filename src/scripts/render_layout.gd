@@ -1,5 +1,6 @@
 class_name RenderLayout extends VBoxContainer
 
+@export var view_texture_rect: TextureRect
 @export var render_path: LineEdit
 
 static var is_rendering: bool = false
@@ -7,6 +8,9 @@ static var is_rendering: bool = false
 var renderer: Renderer = Renderer.new()
 @onready var frame_texture: ViewportTexture = View.main_view.get_texture() 
 
+
+func _ready() -> void:
+	view_texture_rect.texture = View.main_view.get_texture()
 
 
 func _on_render_button_pressed() -> void:

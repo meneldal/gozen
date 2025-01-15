@@ -8,12 +8,17 @@ var id: int
 var file_id: int
 var type: File.TYPE
 
+var track: int
 var start_frame: int # Timeline begin of clip
+var end_frame: int : get = get_end_frame
 var duration: int
 var begin: int = 0 # Only for video files
 
 var effects_audio: EffectsAudio = EffectsAudio.new()
 
+
+func get_end_frame() -> int:
+	return start_frame + duration - 1
 
 
 func get_audio() -> PackedByteArray:

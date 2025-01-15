@@ -1,5 +1,6 @@
 extends Button
 
+const WAVE_RECT_PATH: String = "res://objects/audio_wave_texture_rect.tscn"
 
 @onready var parent: Control = get_parent()
 
@@ -17,46 +18,45 @@ var wave_texture_rect: TextureRect = null
 
 
 func _ready() -> void:
+	var l_data: ClipData = get_clip_data()
+
 	_add_resize_button(PRESET_LEFT_WIDE, true)
 	_add_resize_button(PRESET_RIGHT_WIDE, false)
 
-	if button_down.connect(_on_button_down):
-		printerr("Couldn't connect to button_down!")
-	if gui_input.connect(_on_gui_input):
-		printerr("Couldn't connect to gui_input!")
+	@warning_ignore("standalone_expression") [
+		button_down.connect(_on_button_down),
+		gui_input.connect(_on_gui_input),
+		Timeline.instance._on_zoom_changed.connect(_update_wave)]
 
-	if get_clip_data().type in View.AUDIO_TYPES:
-		var l_material: ShaderMaterial = ShaderMaterial.new()
-
+	if l_data.type in View.AUDIO_TYPES:
 		clip_children = CLIP_CHILDREN_AND_DRAW
 
-		l_material.shader = preload("res://shaders/wave.gdshader")
-
-		wave_texture_rect = TextureRect.new()
-		wave_texture_rect.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
+		wave_texture_rect = preload(WAVE_RECT_PATH).instantiate()
+		wave_texture_rect.position.x = -(Timeline.get_frame_pos(l_data.begin))
 		wave_texture_rect.texture = get_file_data().wave
-		wave_texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		wave_texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		wave_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		wave_texture_rect.position.x = -(get_clip_data().begin * Project.timeline_scale)
-		wave_texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		wave_texture_rect.material = l_material
 
 		add_child(wave_texture_rect)
+		await RenderingServer.frame_pre_draw
+		_update_wave()
 
 
 func _process(_delta: float) -> void:
 	if is_resizing_left or is_resizing_right:
-		var l_new_frame: int = clampi(
-			TimelineClips.get_frame_nr(parent.get_local_mouse_position().x),
-			max_left_resize,
-			max_right_resize if max_right_resize != -1 else 900000000000)
+		var l_new_frame: int = Timeline.get_frame_id(
+				parent.get_local_mouse_position().x)
 
+		# Making certain we stay in bounds
+		l_new_frame = max(l_new_frame, max_left_resize)
+		if max_right_resize != -1:
+			l_new_frame = min(l_new_frame, max_right_resize)
+
+		# Updating the clip
 		if is_resizing_right:
-			size.x = (l_new_frame - start_frame) * Project.timeline_scale
+			size.x = Timeline.get_frame_pos(l_new_frame - start_frame)
+			_update_wave()
 		elif is_resizing_left:
-			position.x = l_new_frame * Project.timeline_scale
-			size.x = (duration - (l_new_frame - start_frame)) * Project.timeline_scale
+			position.x = Timeline.get_frame_pos(l_new_frame)
+			size.x = Timeline.get_frame_pos(duration - (l_new_frame - start_frame))
 			_update_wave(get_clip_data().begin + (l_new_frame - start_frame))
 
 
@@ -66,24 +66,25 @@ func _on_button_down() -> void:
 
 
 func _input(a_event: InputEvent) -> void:
+	# TODO: Make it so only selected clips can be cut
+	# Timeline.selected_clips
 	if a_event.is_action_pressed("clip_split"):
-
+		var l_data: ClipData = get_clip_data()
 		# Check if playhead is inside of clip, else we skip creating undo and
 		# redo entries.
-		if View.frame_nr <= get_clip_data().start_frame:
-			return # Playhead is left of the clip
-		elif View.frame_nr >= get_clip_data().start_frame + get_clip_data().duration:
-			return # Playhead is right of the clip
+		if View.frame_nr <= l_data.start_frame or View.frame_nr >= l_data.end_frame:
+			return # Playhead is left/right of the clip
 
 		Project.undo_redo.create_action("Deleting clip on timeline")
 
-		Project.undo_redo.add_do_method(_cut_clip.bind(View.frame_nr, get_clip_data()))
-		Project.undo_redo.add_undo_method(_uncut_clip.bind(View.frame_nr, get_clip_data()))
-
+		Project.undo_redo.add_do_method(_cut_clip.bind(View.frame_nr, l_data))
 		Project.undo_redo.add_do_method(View._update_frame)
-		Project.undo_redo.add_undo_method(View._update_frame)
 		Project.undo_redo.add_do_method(_update_wave)
+
+		Project.undo_redo.add_undo_method(_uncut_clip.bind(View.frame_nr, l_data))
+		Project.undo_redo.add_undo_method(View._update_frame)
 		Project.undo_redo.add_undo_method(_update_wave)
+
 		Project.undo_redo.commit_action()
 
 
@@ -104,15 +105,11 @@ func _on_gui_input(a_event: InputEvent) -> void:
 	if a_event.is_action_pressed("delete_clip"):
 		Project.undo_redo.create_action("Deleting clip on timeline")
 
-		Project.undo_redo.add_do_method(TimelineClips.instance.delete_clip.bind(
-				TimelineClips.get_track_id(position.y),
-				TimelineClips.get_frame_nr(position.x)))
+		Project.undo_redo.add_do_method(Timeline.instance.delete_clip.bind(
+				get_clip_data().start_frame))
 
-		Project.undo_redo.add_undo_method(TimelineClips.instance.undelete_clip.bind(
-				Project.get_clip_data(
-						TimelineClips.get_track_id(position.y),
-						TimelineClips.get_frame_nr(position.x)),
-				TimelineClips.get_track_id(position.y)))
+		Project.undo_redo.add_undo_method(Timeline.instance.undelete_clip.bind(
+				get_clip_data()))
 
 		Project.undo_redo.add_do_method(View._update_frame)
 		Project.undo_redo.add_undo_method(View._update_frame)
@@ -124,9 +121,7 @@ func _get_drag_data(_pos: Vector2) -> Draggable:
 		return null
 
 	var l_draggable: Draggable = Draggable.new()
-	var l_ignore: Vector2i = Vector2i(
-			TimelineClips.get_track_id(position.y),
-			TimelineClips.get_frame_nr(position.x))
+	var l_data: ClipData = get_clip_data()
 
 	# Add clip id to array
 	if l_draggable.ids.append(name.to_int()):
@@ -134,9 +129,9 @@ func _get_drag_data(_pos: Vector2) -> Draggable:
 
 	l_draggable.files = false
 	l_draggable.duration = get_clip_data().duration
-	l_draggable.mouse_offset = TimelineClips.get_frame_nr(get_local_mouse_position().x)
+	l_draggable.offset = int(get_local_mouse_position().x / Timeline.get_zoom())
 
-	l_draggable.ignore.append(l_ignore)
+	l_draggable.ignores.append(Vector2i(l_data.track, l_data.start_frame))
 	l_draggable.clip_buttons.append(self)
 
 	modulate = Color(1, 1, 1, 0.1)
@@ -172,40 +167,31 @@ func _add_resize_button(a_preset: LayoutPreset, a_left: bool) -> void:
 
 
 func _on_resize_engaged(a_left: bool) -> void:
-	var l_track: int = TimelineClips.get_track_id(position.y)
-	var l_frame: int = TimelineClips.get_frame_nr(position.x)
+	var l_data: ClipData = get_clip_data()
 	var l_previous: int = -1
 
-	start_frame = get_clip_data().start_frame
-	duration = get_clip_data().duration
+	start_frame = l_data.start_frame
+	duration = l_data.duration
+	max_left_resize = 0
 
 	# First calculate spacing left of handle to other clips
 	if a_left:
-		for i: int in Project.tracks[l_track]:
-			if i < l_frame:
-				l_previous = max(0, i - 1)
-			else:
+		for i: int in Project.tracks[l_data.track]:
+			if i >= l_data.start_frame:
 				break
+			l_previous = max(0, i - 1)
 
-		if l_previous == -1:
-			max_left_resize = 0
-		else:
-			max_left_resize = Project.get_clip_data(l_track, l_previous).duration + l_previous
+		if l_previous != -1:
+			max_left_resize = l_data.duration + l_previous
+		max_right_resize = l_data.end_frame
 	else:
-		max_left_resize = get_clip_data().start_frame + 1
-
-	# First calculate spacing right of handle to other clips
-	l_previous = -1
-
-	if !a_left:
-		for i: int in Project.tracks[l_track]:
-			if i > l_frame:
+		for i: int in Project.tracks[l_data.track]:
+			if i > l_data.start_frame:
 				l_previous = i
 				break
 
+		max_left_resize = l_data.start_frame + 1
 		max_right_resize = maxi(l_previous, -1)
-	else:
-		max_right_resize = get_clip_data().duration + get_clip_data().start_frame - 1
 
 	# Check if audio/video how much space is left to extend, take minimum
 	if get_clip_data().type in [File.TYPE.VIDEO, File.TYPE.AUDIO]:
@@ -223,11 +209,8 @@ func _on_resize_engaged(a_left: bool) -> void:
 			else:
 				max_right_resize = min(max_right_resize, l_duration_left)
 				
-	if a_left:
-		is_resizing_left = true
-	else:
-		is_resizing_right = true
-
+	is_resizing_left = a_left
+	is_resizing_right = !a_left
 	get_viewport().set_input_as_handled()
 
 
@@ -238,40 +221,37 @@ func _on_commit_resize() -> void:
 	Project.undo_redo.create_action("Resizing clip on timeline")
 
 	Project.undo_redo.add_do_method(_set_resize_data.bind(
-			TimelineClips.get_frame_nr(position.x),
-			TimelineClips.get_frame_nr(size.x)))
+			Timeline.get_frame_id(position.x),
+			Timeline.get_frame_id(size.x)))
+	Project.undo_redo.add_do_method(View._update_frame)
+	Project.undo_redo.add_do_method(_update_wave)
 
 	Project.undo_redo.add_undo_method(_set_resize_data.bind(
-			get_clip_data().start_frame,
-			get_clip_data().duration))
-
-	Project.undo_redo.add_do_method(View._update_frame)
+			get_clip_data().start_frame, get_clip_data().duration))
 	Project.undo_redo.add_undo_method(View._update_frame)
-	Project.undo_redo.add_do_method(_update_wave)
 	Project.undo_redo.add_undo_method(_update_wave)
 
 	Project.undo_redo.commit_action()
 
 
 func _set_resize_data(a_new_start: int, a_new_duration: int) -> void:
-	var l_clip_data: ClipData = get_clip_data()
+	var l_data: ClipData = get_clip_data()
 
-	if l_clip_data.start_frame != a_new_start:
-		l_clip_data.begin += a_new_start - l_clip_data.start_frame
+	if l_data.start_frame != a_new_start:
+		l_data.begin += a_new_start - l_data.start_frame
 
-	position.x = a_new_start * Project.timeline_scale
-	size.x = a_new_duration * Project.timeline_scale
+	position.x = a_new_start * Timeline.get_zoom()
+	size.x = a_new_duration * Timeline.get_zoom()
 
-	if !Project.tracks[TimelineClips.get_track_id(position.y)].erase(
-			Project.clips[name.to_int()].start_frame):
+	if !Project.tracks[l_data.track].erase(l_data.start_frame):
 		printerr("Could not erase from tracks!")
-	Project.tracks[TimelineClips.get_track_id(position.y)][a_new_start] = name.to_int()
+	Project.tracks[l_data.track][a_new_start] = name.to_int()
 
-	l_clip_data.start_frame = a_new_start
-	l_clip_data.duration = a_new_duration
-	l_clip_data.update_audio_data()
+	l_data.start_frame = a_new_start
+	l_data.duration = a_new_duration
+	l_data.update_audio_data()
 
-	TimelineClips.instance.update_timeline_end()
+	Timeline.instance.update_end()
 
 
 func _cut_clip(a_playhead: int, a_clip_data: ClipData) -> void:
@@ -285,24 +265,27 @@ func _cut_clip(a_playhead: int, a_clip_data: ClipData) -> void:
 	l_new_clip.start_frame = a_playhead
 	l_new_clip.duration = abs(a_clip_data.duration - l_frame)
 	l_new_clip.begin = a_clip_data.begin + l_frame
+	l_new_clip.track = a_clip_data.track
 
 	a_clip_data.duration -= l_new_clip.duration - 1
-	size.x = a_clip_data.duration * Project.timeline_scale
+	size.x = a_clip_data.duration * Timeline.get_zoom()
 
-	TimelineClips.instance._add_new_clips({
-			l_new_clip.id: l_new_clip}, TimelineClips.get_track_id(position.y))
-	
+	Project.clips[l_new_clip.id] = l_new_clip
+	Project.tracks[l_new_clip.track][l_new_clip.start_frame] = l_new_clip.id
+
 	a_clip_data.update_audio_data()
+	l_new_clip.update_audio_data()
+	Timeline.instance.add_clip(l_new_clip)
 
 
 func _uncut_clip(a_playhead: int, a_current_clip: ClipData) -> void:
-	var l_track: int = TimelineClips.get_track_id(position.y)
-	var l_split_clip: ClipData = Project.get_clip_data(l_track, a_playhead)
+	var l_track: int = Timeline.get_track_id(position.y)
+	var l_split_clip: ClipData = Project.clips[Project.tracks[l_track][a_playhead]]
 
 	a_current_clip.duration += l_split_clip.duration
-	size.x = a_current_clip.duration * Project.timeline_scale
+	size.x = Timeline.get_frame_pos(a_current_clip.duration)
 
-	TimelineClips.instance.delete_clip(l_track, a_playhead)
+	Timeline.instance.delete_clip(l_track, a_playhead)
 	a_current_clip.update_audio_data()
 
 
@@ -320,5 +303,7 @@ func get_file_data() -> FileData:
 
 func _update_wave(a_begin: int = get_clip_data().begin) -> void:
 	if wave_texture_rect != null:
-		wave_texture_rect.position.x = -(a_begin * Project.timeline_scale)
+		wave_texture_rect.position.x = -(a_begin * Timeline.get_zoom())
+		wave_texture_rect.size.x = wave_texture_rect.texture.\
+				get_image().get_size().x * Timeline.get_zoom()
 
