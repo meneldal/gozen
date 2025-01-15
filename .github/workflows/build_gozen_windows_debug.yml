@@ -63,13 +63,12 @@ jobs:
           # Build Godot
           mkdir bin
           mkdir bin/windows
-          cp libs/bin/windows/* bin/windows
           ./Godot_v${GODOT_VERSION}-stable_linux.x86_64 --import src/project.godot --quiet --headless --export-debug Windows ../bin/windows/GoZen_${{ env.date }}_debug.exe
 
       - name: Uploading build
         uses: actions/upload-artifact@v4
         with:
           name: gozen_windows_${{ env.date }}
-          path: bin/
+          path: bin/windows
           retention-days: 20
 
