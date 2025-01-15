@@ -379,18 +379,18 @@ void Video::_copy_frame_data() {
 			return;
 		}
 
-		std::copy_n(av_hw_frame->data[0], y_data.size(), y_data.ptrw());
-		std::copy_n(av_hw_frame->data[1], u_data.size(), u_data.ptrw());
+		memcpy(y_data.ptrw(), av_hw_frame->data[0], y_data.size());
+		memcpy(u_data.ptrw(), av_hw_frame->data[1], u_data.size());
 		if (!hw_decoding)
-			std::copy_n(av_hw_frame->data[2], v_data.size(), v_data.ptrw());
+			memcpy(v_data.ptrw(), av_hw_frame->data[2], v_data.size());
 
 		av_frame_unref(av_hw_frame);
 		return;
 	}
 
-	std::copy_n(av_frame->data[0], y_data.size(), y_data.ptrw());
-	std::copy_n(av_frame->data[1], u_data.size(), u_data.ptrw());
-	std::copy_n(av_frame->data[2], v_data.size(), v_data.ptrw());
+	memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
+	memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
+	memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
 }
 
 const AVCodec *Video::_get_hw_codec() {
