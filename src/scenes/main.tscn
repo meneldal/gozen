@@ -230,11 +230,10 @@ vertical_alignment = 1
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxEmpty_ovds5")
-current_tab = 1
+current_tab = 0
 tabs_visible = false
 
 [node name="EditingLayout" type="VBoxContainer" parent="VBox/MainTabContainer"]
-visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 metadata/_tab_index = 0
@@ -280,11 +279,19 @@ layout_mode = 2
 [node name="TimelinePanel" parent="VBox/MainTabContainer/EditingLayout" instance=ExtResource("6_bexox")]
 layout_mode = 2
 
-[node name="RenderingLayout" type="VBoxContainer" parent="VBox/MainTabContainer" node_paths=PackedStringArray("render_path")]
+[node name="RenderingLayout" type="VBoxContainer" parent="VBox/MainTabContainer" node_paths=PackedStringArray("view_texture_rect", "render_path")]
+visible = false
 layout_mode = 2
 script = ExtResource("14_0vgd5")
+view_texture_rect = NodePath("TextureRect")
 render_path = NodePath("PathLineEdit")
 metadata/_tab_index = 1
+
+[node name="TextureRect" type="TextureRect" parent="VBox/MainTabContainer/RenderingLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
 
 [node name="PathLineEdit" type="LineEdit" parent="VBox/MainTabContainer/RenderingLayout"]
 layout_mode = 2
