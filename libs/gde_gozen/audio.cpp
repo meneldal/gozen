@@ -1,5 +1,4 @@
 #include "audio.hpp"
-#include <map>
 
 
 PackedByteArray Audio::get_audio_data(String a_path) {
@@ -41,23 +40,33 @@ PackedByteArray Audio::get_audio_data(String a_path) {
 }
 
 Ref<ImageTexture> Audio::get_audio_wave(PackedByteArray a_data, int a_framerate) {
+	constexpr int l_sample_rate = 44100;
+	constexpr int l_num_channels = 2;
+
 	const int16_t *l_raw_data = (const int16_t*)a_data.ptr();
+	const Vector4i l_color = Vector4i(170, 0, 255, 170);
+
+	const int l_total_samples = a_data.size() / 2;
+	const int l_samples_per_frame = (l_sample_rate * 2) / a_framerate;
 
 	// Divide by 2 for 16 bits and 2 for stereo * sample rate
-	const int l_width = (a_data.size() * a_framerate) / (44100 * 4);
+	const int l_width = (l_total_samples + l_samples_per_frame -1) / l_samples_per_frame;
 	const int l_height = 30;
-	const int l_samples_per_frame = (44100 * 2) / a_framerate;
 
 	PackedByteArray l_image_data = PackedByteArray();
-	l_image_data.resize(l_height * l_width);
-	l_image_data.fill(0); // fill with black
+	PackedByteArray l_temp_image_data = PackedByteArray();
+	l_temp_image_data.resize(l_height * l_width);
+	l_temp_image_data.fill(0); // fill with black
 
 	for (int i = 0; i < l_width; ++i) {
 		int l_frame_start = i * l_samples_per_frame;
 		int l_frame_end = l_frame_start + l_samples_per_frame;
 
-		if (l_frame_end > a_data.size() / 2)
-			l_frame_end = a_data.size() / 2; // Avoid going out of bounds
+		// Avoid going out of bounds
+		if (l_frame_end > l_total_samples)
+			l_frame_end = l_total_samples;
+		if (l_frame_start >= l_total_samples)
+			break; // EOD
 
 		int32_t l_sum_amplitude = 0;
 		for (int x = l_frame_start; x < l_frame_end; ++x)
@@ -70,11 +79,23 @@ Ref<ImageTexture> Audio::get_audio_wave(PackedByteArray a_data, int a_framerate)
 
         // Fill the waveform for this frame in the image
         for (int y = 0; y < l_block_height; ++y)
-            l_image_data[(l_height - 1 - y) * l_width + i] = 255; // White pixel
+            l_temp_image_data[(l_height - 1 - y) * l_width + i] = 1;
+	}
+
+	l_image_data.resize(l_temp_image_data.size() * 4);
+	l_image_data.fill(0);
+
+	for (int i = 0; i < l_temp_image_data.size(); ++i) {
+		if (l_temp_image_data[i] == 1) {
+			l_image_data[i * 4] = l_color.x;
+			l_image_data[i * 4 + 1] = l_color.y;
+			l_image_data[i * 4 + 2] = l_color.z;
+			l_image_data[i * 4 + 3] = l_color.w;
+		}
 	}
 
 	Ref<Image> l_image = Image::create_from_data(
-			l_width, l_height, false, Image::FORMAT_L8, l_image_data);
+			l_width, l_height, false, Image::FORMAT_RGBA8, l_image_data);
 
 	return ImageTexture::create_from_image(l_image);
 }
