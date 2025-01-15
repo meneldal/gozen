@@ -38,6 +38,16 @@ private:
 	int sample_rate = 44100;
 	int gop_size = 0;
 	int crf = 23; // 0 best quality, 51 worst quality, 18 tends to be not noticable
+	
+	// 1 = SWS_FAST_BILINEAR (Fast, lower quality)
+	// 2 = SWS_BILINEAR (Good balance between speed and quality)
+	// 4 = SWS_BICUBIC (Better quality, but slower)
+	int sws_quality = SWS_BILINEAR;
+
+	// The maximum for B-frames
+	// B-frames can improve the compression of a video as it looks to
+	// previous and future frames to make up the image
+	int b_frames = 0;
  
 	int response = 0;
 	int frame_nr = 0;
@@ -148,6 +158,15 @@ public:
 
 	inline void set_sample_rate(int a_value) { sample_rate = a_value; }
 	inline int get_sample_rate() { return sample_rate; }
+
+	inline void set_sws_quality(int a_value) { 
+		if (a_value == 2) sws_quality = SWS_FAST_BILINEAR;
+		else if (a_value == 4) sws_quality = SWS_BICUBIC;
+		else sws_quality = SWS_BILINEAR; }
+	inline int get_sws_quality() { return sws_quality; }
+
+	inline void set_b_frames(int a_value) { b_frames = a_value; }
+	inline int get_b_frames() { return b_frames; }
 
 	inline void enable_audio() { audio_enabled = true; }
 	inline void disable_audio() { audio_enabled = false; }
@@ -333,6 +352,12 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("set_sample_rate", "a_value"), &Renderer::set_sample_rate);
 		ClassDB::bind_method(D_METHOD("get_sample_rate"), &Renderer::get_sample_rate);
+
+		ClassDB::bind_method(D_METHOD("set_sws_quality", "a_value"), &Renderer::set_sws_quality);
+		ClassDB::bind_method(D_METHOD("get_sws_quality"), &Renderer::get_sws_quality);
+
+		ClassDB::bind_method(D_METHOD("set_b_frames", "a_value"), &Renderer::set_b_frames);
+		ClassDB::bind_method(D_METHOD("get_b_frames"), &Renderer::get_b_frames);
 
 		ClassDB::bind_method(D_METHOD("enable_audio"), &Renderer::enable_audio);
 		ClassDB::bind_method(D_METHOD("disable_audio"), &Renderer::disable_audio);

@@ -80,9 +80,9 @@ bool Renderer::open() {
 	av_codec_ctx_video->gop_size = gop_size;
 
 	if (av_codec_ctx_video->codec_id == AV_CODEC_ID_MPEG2VIDEO)
-		av_codec_ctx_video->max_b_frames = 2;
+		av_codec_ctx_video->max_b_frames = b_frames <= 2 ? b_frames : 2;
 	else
-		av_codec_ctx_video->max_b_frames = 1;
+		av_codec_ctx_video->max_b_frames = b_frames;
 
 	if (av_codec_ctx_video->codec_id == AV_CODEC_ID_MPEG1VIDEO)
 		av_codec_ctx_video->mb_decision = 2;
