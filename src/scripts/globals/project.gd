@@ -81,7 +81,7 @@ func save(a_path: String = _path) -> void:
 	OS.set_use_file_access_save_and_swap(false)
 	
 
-func load(a_path: String) -> void:
+func load(a_path: String = "") -> void:
 	if _unsaved_changes:
 		var l_dialog: ConfirmationDialog = ConfirmationDialog.new()
 

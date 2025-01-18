@@ -1,28 +1,28 @@
-[gd_scene load_steps=35 format=3 uid="uid://bvbtbhqrbp1u"]
+[gd_scene load_steps=38 format=3 uid="uid://bvbtbhqrbp1u"]
 
 [ext_resource type="Script" path="res://scripts/main_scene.gd" id="1_6sk7e"]
 [ext_resource type="Script" path="res://scripts/menu_bar.gd" id="2_ape6y"]
 [ext_resource type="PackedScene" uid="uid://clxwikblkyucr" path="res://scenes/files_panel.tscn" id="3_6pnh6"]
+[ext_resource type="Texture2D" uid="uid://b1n31pcytnsx2" path="res://assets/icons/save.png" id="3_mcyxr"]
 [ext_resource type="Texture2D" uid="uid://bv3xxhbb81md5" path="res://logo.svg" id="3_piflc"]
 [ext_resource type="Script" path="res://scripts/status_bar.gd" id="3_qlddx"]
 [ext_resource type="Texture2D" uid="uid://dxg1oo4c2cmhr" path="res://assets/icons/layouts/editor_icon.png" id="4_blfpg"]
 [ext_resource type="Texture2D" uid="uid://br5sv7q167obp" path="res://assets/icons/window/minimize.png" id="4_plua6"]
+[ext_resource type="Texture2D" uid="uid://i3npf1v3g7ay" path="res://assets/icons/save_as.png" id="4_r580n"]
+[ext_resource type="Texture2D" uid="uid://d0sekj1pmn047" path="res://assets/icons/folder_open.png" id="5_8nptl"]
 [ext_resource type="Texture2D" uid="uid://b7iw0yh8hp2m7" path="res://assets/icons/layouts/render_icon.png" id="5_aurtj"]
 [ext_resource type="Texture2D" uid="uid://cbcfmcyepa0ag" path="res://assets/icons/window/maximize.png" id="5_pemgp"]
 [ext_resource type="PackedScene" uid="uid://cmv40pg6t5bat" path="res://scenes/effects_panel.tscn" id="5_uog5s"]
 [ext_resource type="PackedScene" uid="uid://i0b2chrh82xc" path="res://scenes/timeline_panel.tscn" id="6_bexox"]
+[ext_resource type="Texture2D" uid="uid://cgpmm2sukr6q6" path="res://assets/icons/support.png" id="6_mj3pq"]
 [ext_resource type="Texture2D" uid="uid://dh6fp0s0eppwn" path="res://assets/icons/window/close.png" id="6_tbbno"]
+[ext_resource type="Texture2D" uid="uid://ugsarkvhfpfm" path="res://assets/icons/info.png" id="7_hkmj0"]
+[ext_resource type="Texture2D" uid="uid://bws4tffb1k6dv" path="res://assets/icons/link.png" id="8_02kmp"]
 [ext_resource type="Script" path="res://scripts/view_panel.gd" id="11_mpdmj"]
 [ext_resource type="Script" path="res://scripts/render_layout.gd" id="14_0vgd5"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bx7lp"]
 bg_color = Color(1, 1, 1, 0.054902)
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ne643"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jur34"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_a5ouf"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fh8o4"]
 content_margin_left = 2.0
@@ -83,7 +83,7 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
-[node name="Control" type="Control" node_paths=PackedStringArray("main_tab_container", "layout_buttons", "layout_indicator")]
+[node name="Control" type="Control" node_paths=PackedStringArray("main_tab_container", "layout_buttons", "layout_indicator", "gozen_button")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -94,6 +94,7 @@ script = ExtResource("1_6sk7e")
 main_tab_container = NodePath("VBox/MainTabContainer")
 layout_buttons = [NodePath("VBox/MenuBarPanel/HBoxContainer/VBoxContainer/TopMenuBarPanel/HBoxContainer/LayoutsHBox/EditingLayoutButton"), NodePath("VBox/MenuBarPanel/HBoxContainer/VBoxContainer/TopMenuBarPanel/HBoxContainer/LayoutsHBox/RenderLayoutButton")]
 layout_indicator = NodePath("VBox/MenuBarPanel/HBoxContainer/VBoxContainer/TopMenuBarPanel/LayoutIndicator")
+gozen_button = NodePath("VBox/MenuBarPanel/HBoxContainer/GoZenButton")
 
 [node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -113,16 +114,37 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_bx7lp")
 layout_mode = 2
 theme_override_constants/separation = -1
 
-[node name="GoZenButton" type="Button" parent="VBox/MenuBarPanel/HBoxContainer"]
+[node name="GoZenButton" type="MenuButton" parent="VBox/MenuBarPanel/HBoxContainer"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
-theme_override_styles/focus = SubResource("StyleBoxEmpty_ne643")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_jur34")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_a5ouf")
+theme_override_styles/focus = SubResource("StyleBoxFlat_fh8o4")
+theme_override_styles/hover = SubResource("StyleBoxFlat_fh8o4")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_fh8o4")
 theme_override_styles/normal = SubResource("StyleBoxFlat_fh8o4")
 icon = ExtResource("3_piflc")
+flat = false
 icon_alignment = 1
 expand_icon = true
+item_count = 7
+popup/item_0/text = "Save project"
+popup/item_0/icon = ExtResource("3_mcyxr")
+popup/item_1/text = "Save project as ..."
+popup/item_1/icon = ExtResource("4_r580n")
+popup/item_1/id = 1
+popup/item_2/text = "Load project"
+popup/item_2/icon = ExtResource("5_8nptl")
+popup/item_2/id = 2
+popup/item_3/id = 3
+popup/item_3/separator = true
+popup/item_4/text = "Support GoZen"
+popup/item_4/icon = ExtResource("6_mj3pq")
+popup/item_4/id = 10
+popup/item_5/text = "About GoZen"
+popup/item_5/icon = ExtResource("7_hkmj0")
+popup/item_5/id = 11
+popup/item_6/text = "GoZen site"
+popup/item_6/icon = ExtResource("8_02kmp")
+popup/item_6/id = 12
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBox/MenuBarPanel/HBoxContainer"]
 layout_mode = 2

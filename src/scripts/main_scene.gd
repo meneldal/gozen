@@ -5,6 +5,7 @@ extends Control
 @export var layout_buttons: Array[Button]
 @export var layout_indicator: Panel
 
+@export var gozen_button: MenuButton
 
 
 var resizing: bool = false
@@ -15,6 +16,7 @@ var move_offset: Vector2 = Vector2.ZERO
 
 var maximized: bool = false
 var old_size: Rect2i
+
 
 
 func _ready() -> void:
@@ -35,6 +37,11 @@ func _ready() -> void:
 			get_window().borderless = false
 
 	_on_switch_layout(0)
+
+	@warning_ignore("return_value_discarded")
+	gozen_button.get_popup().id_pressed.connect(_on_gozen_popup_option_pressed)
+	for l_id: int in gozen_button.get_popup().item_count:
+		gozen_button.get_popup().set_item_icon_max_width(l_id, 20)
 
 
 func _process(_delta: float) -> void:
@@ -115,4 +122,18 @@ func _on_switch_layout(a_tab_index: int) -> void:
 	# Make other layout buttons dimmer to be more clear
 	for i: int in layout_buttons.size():
 		layout_buttons[i].modulate.a = 1.0 if a_tab_index == i else 0.5
+
+
+func _on_gozen_popup_option_pressed(a_id: int) -> void:
+	match a_id:
+		0: Project.save(Project._path) # Save current project
+		1: Project.save() # Save as ...
+		2: Project.load() # Open file dialog to select project
+		10: # Support
+			@warning_ignore("return_value_discarded")
+			OS.shell_open("https://ko-fi.com/voylin")
+		11: pass # About   TODO: Create a popup window which display's GoZen info + version
+		12: # Site    TODO: Make a real site
+			@warning_ignore("return_value_discarded")
+			OS.shell_open("https://github.com/VoylinsGamedevJourney/GoZen")
 
